@@ -3,6 +3,7 @@ import os
 from dataset.create_data import MyData
 import torch.nn as nn
 import torch.optim as optim
+from torchvision import transforms
 
 
 def add_conv_stage(dim_in, dim_out, kernel_size=3, stride=1, padding=1, bias=True):
@@ -70,32 +71,29 @@ class Net(nn.Module):
 def train():
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     epoch = 100
-    batch_size = 50
+    batch_size = 10
 
-    train_dir = "/share/home/dq070/Real-Time/cityscapes/leftImg8bit/train"
-    val_dir = "/share/home/dq070/Real-Time/cityscapes/leftImg8bit/train"
+    train_dir = "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
+    val_dir = "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
     train_data = MyData(train_dir)
     val_data = MyData(val_dir)
 
     UNet = Net().cuda()
 
-
     criterion = torch.nn.MSELoss()
-    optimizer = optim.SGD(UNet.parameters(), lr = 1e-3, momentum = 0.1)
+    optimizer = optim.SGD(UNet.parameters(), lr = 6e-05, momentum = 0.1)
 
     for epo in range(0, epoch):
-        train_data.make_train_list()
-        val_data.make_train_list()
-        train_batch = torch.zeros(batch_size, 3, 1024, 512)
-        val_batch = torch.zeros(batch_size, 3, 1024, 512)
+        # train_data.make_train_list()
+        # val_data.make_train_list()
+        train_batch = torch.zeros(batch_size, 3, 512, 512)
+        val_batch = torch.zeros(batch_size, 3, 512, 512)
         for batch_num in range(0, int(train_data.__len__()/batch_size)):
             for i in range(0, batch_size):
                 train_data_idx = batch_num*batch_size + i
                 val_data_idx = (batch_num*batch_size + i+1) % val_data.__len__()
-
                 train_data_item = train_data[train_data_idx]
                 val_data_item = val_data[val_data_idx]
-
                 train_batch[i, :, :, :] = train_data_item
                 val_batch[i, :, :, :] = val_data_item
 
@@ -104,8 +102,8 @@ def train():
             loss = criterion(out, val_batch.cuda())
             loss.backward()
             optimizer.step()
-
             print('This is batch {i} in epoch {epo}, the loss is {loss}'.format(i=batch_num, epo=epo, loss=loss))
+        torch.save(UNet.state_dict(), './checkpoint/mlp.params')
 
 if __name__ == '__main__':
     train()

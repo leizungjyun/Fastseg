@@ -3,6 +3,11 @@ import os
 from dataset.create_data import MyData
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.parallel
+import torch.distributed as distributed
+import torch.utils.data
+import torch.utils.data.distributed
+
 from torchvision import transforms
 
 
@@ -69,16 +74,26 @@ class Net(nn.Module):
         return conv0_out
 
 def train():
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    ngpu = torch.cuda.device_count()
+
+
     epoch = 100
-    batch_size = 10
+    batch_size = 128
 
     train_dir = "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
     val_dir = "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
     train_data = MyData(train_dir)
     val_data = MyData(val_dir)
 
-    UNet = Net().cuda()
+    UNet = Net().to(device)
+
+    if ngpu > 1:
+        UNet = nn.DataParallel(UNet)
+
+    # UNet.load_state_dict(torch.load('./checkpoint/mlp.params'))
+    # UNet.eval()
 
     criterion = torch.nn.MSELoss()
     optimizer = optim.SGD(UNet.parameters(), lr = 6e-05, momentum = 0.1)
@@ -96,10 +111,17 @@ def train():
                 val_data_item = val_data[val_data_idx]
                 train_batch[i, :, :, :] = train_data_item
                 val_batch[i, :, :, :] = val_data_item
+            train_batch = train_batch.to(device)
+            val_batch = val_batch.to(device)
 
             optimizer.zero_grad()
-            out = UNet(train_batch.cuda())
-            loss = criterion(out, val_batch.cuda())
+            # train_batch = train_batch.view(-1, 3, 512, 512)
+            # val_batch = val_batch.view(-1, 3, 512, 512)
+
+            out = UNet(train_batch)
+            loss = criterion(out, val_batch)
+            loss = loss.mean()
+
             loss.backward()
             optimizer.step()
             print('This is batch {i} in epoch {epo}, the loss is {loss}'.format(i=batch_num, epo=epo, loss=loss))

@@ -87,11 +87,11 @@ def train():
     ngpu = torch.cuda.device_count()
 
 
-    epoch = 100
+    epoch = 300
     batch_size = 128
 
-    train_dir = "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
-    val_dir = "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
+    train_dir = "/share/home/dq070/hy-tmp/datasets/cityscapes/leftImg8bit/train-bright"
+    val_dir = "/share/home/dq070/hy-tmp/datasets/cityscapes/leftImg8bit/train-all"
     train_data = MyData(train_dir)
     val_data = MyData(val_dir)
 
@@ -116,7 +116,7 @@ def train():
         for batch_num in range(0, int(train_data.__len__()/batch_size)):
             for i in range(0, batch_size):
                 train_data_idx = batch_num*batch_size + i
-                val_data_idx = (batch_num*batch_size + i+1) % val_data.__len__()
+                val_data_idx = batch_num*batch_size + i
                 train_data_item = train_data[train_data_idx]
                 val_data_item = val_data[val_data_idx]
                 train_batch[i, :, :, :] = train_data_item
@@ -125,7 +125,7 @@ def train():
                 val_batch = val_batch.to(device)
 
                 optimizer.zero_grad()
-            # train_batch = train_batch.view(-1, 3, 512, 512)
+                # train_batch = train_batch.view(-1, 3, 512, 512)
             # val_batch = val_batch.view(-1, 3, 512, 512)
 
                 out = UNet(train_batch)
@@ -144,7 +144,7 @@ def train():
             # plt.savefig('/share/home/dq070/Real-Time/Zero_to_One/Unet_pretrain/AR-new/Loss_fig/loss_curve.png')
 
             print('This is batch {i} in epoch {epo}, the loss is {loss}'.format(i=batch_num, epo=epo, loss=loss))
-        torch.save(UNet.state_dict(), './checkpoint/mlp.params')
+        torch.save(UNet.state_dict(), './checkpoint_HRDA/mlp.params')
         epoch_train_losses /= train_data.__len__()
         train_losses.append(epoch_train_losses)
 
@@ -153,7 +153,7 @@ def train():
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.title('Training Loss Curve')
-        plt.savefig('/share/home/dq070/Real-Time/Zero_to_One/Unet_pretrain/AR-new/Loss_fig/loss_curve.png')
+        plt.savefig('/share/home/dq070/Real-Time/Zero_to_One/Unet_pretrain/AR-new/Loss_fig_HRDA/loss_curve.png')
 
 if __name__ == '__main__':
     train()

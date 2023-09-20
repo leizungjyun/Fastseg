@@ -37,25 +37,16 @@ class MyData(Dataset):
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
         img =transform(img)
-
-
         img = np.array(img)
         # img = np.transpose(img, (2, 0, 1))
         img = torch.tensor(img, dtype=torch.float32)
         return img
 
+    def get_file_name(self, idx):
+        img_path = self.img_paths[idx]
+        file_name = os.path.basename(img_path)
+        return file_name
+
     def __len__(self):
         return len(self.img_paths)
 
-    # def make_train_list(self, height=1024, width=512):
-    #     self.data = torch.zeros(self.__len__(), 3, height, width)
-    #     for i in range(0, self.__len__()):
-    #         img = self.__getitem__(i)
-    #         img = img.resize((width,height,3), Image.BICUBIC)
-    #         img = np.array(img)
-    #         img = np.transpose(img, (2, 0, 1))
-    #         img = torch.tensor(img, dtype=torch.float32)
-    #         # img -= torch.tensor(self.mean).view(3,1,1)
-    #         self.data[i] = img
-    #         # self.data[i, :, :, :] = torch.tensor(img[i])
-    #     return data[i]

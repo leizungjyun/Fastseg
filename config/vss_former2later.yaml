@@ -4,6 +4,8 @@ data:
   train_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
   val_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
   eval_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/val"
+  height: 224
+  width: 224
 
 cuda_visible_devices: "0,1,2,3"
 
@@ -16,7 +18,7 @@ model:
 training:
   device: "cuda"  # "cuda" if torch.cuda.is_available() else "cpu"
   epoch: 100
-  batch_size: 16
+  batch_size: 64
   learning_rate: 6e-05
   momentum: 0.1
 

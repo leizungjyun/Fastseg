@@ -175,7 +175,7 @@ class ResNetDecoder(torch.nn.Module):
 
 class ResNetAE(torch.nn.Module):
     def __init__(self,
-                 input_shape=(512, 512, 3),
+                 input_shape=(224, 224, 3),
                  n_ResidualBlock=8,
                  n_levels=4,
                  z_dim=128,

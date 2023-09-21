@@ -73,6 +73,9 @@ def train(args):
     device = torch.device(cfg["training"]["device"])
     eval_interval = cfg["evaluation"]["interval"]
     eval_dir = cfg["data"]["eval_dir"]
+    height = cfg["data"]["height"]
+    width = cfg["data"]["width"]
+
     for path in [weights_path, save_img_path]:
         if not os.path.exists(path):
             os.makedirs(path)
@@ -110,8 +113,8 @@ def train(args):
     for epo in range(0, epoch):
         epoch_train_losses = 0 # initial epoch loss
         # initial train and val input
-        train_batch = torch.zeros(batch_size, 3, 512, 512)
-        val_batch = torch.zeros(batch_size, 3, 512, 512)
+        train_batch = torch.zeros(batch_size, 3, height, width)
+        val_batch = torch.zeros(batch_size, 3, height, width)
         for batch_num in range(0, int(train_data.__len__()/batch_size)):
 
             for i in range(0, batch_size):

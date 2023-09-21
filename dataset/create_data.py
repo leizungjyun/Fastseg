@@ -23,7 +23,7 @@ class MyData(Dataset):
                     img_paths.append(os.path.join(root,file))
         return img_paths
 
-    def __getitem__(self, idx,height=512, width=512):
+    def __getitem__(self, idx,height=224, width=224):
         img_path = self.img_paths[idx]
         img = Image.open(img_path)
         # print(img.size)

@@ -1,0 +1,24 @@
+# config.yaml
+
+data:
+  train_dir: "/share/home/dq070/hy-tmp/AS_id_all/rain/rain-img/img/train"
+  val_dir: "/share/home/dq070/hy-tmp/AS_id_all/rain/imd/img"
+  eval_dir: "/share/home/dq070/hy-tmp/AS_id_all/rain/imd/img"
+
+cuda_visible_devices: "0,1,2,3"
+
+workdir:
+  weights_path: "./checkpoint_HRDA/mlp.params"
+  save_img_path: "./checkpoint_HRDA/imgs/loss_fig"
+model:
+  type: "Unet"
+  checkpoint_path: "./checkpoint_resnet/mlp.params"
+training:
+  device: "cuda"  # "cuda" if torch.cuda.is_available() else "cpu"
+  epoch: 100
+  batch_size: 64
+  learning_rate: 6e-05
+  momentum: 0.1
+
+evaluation:
+  interval: 3

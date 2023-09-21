@@ -1,0 +1,24 @@
+# config.yaml
+
+data:
+  train_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
+  val_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
+  eval_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/val"
+
+cuda_visible_devices: "0,1,2,3"
+
+workdir:
+  weights_path: "./checkpoint_resnet/mlp.params"
+  save_img_path: "./checkpoint_resnet/imgs/loss_fig/loss_curve.png"
+model:
+  type: "resnet"
+  checkpoint_path: "./checkpoint_resnet/mlp.params"
+training:
+  device: "cuda"  # "cuda" if torch.cuda.is_available() else "cpu"
+  epoch: 100
+  batch_size: 16
+  learning_rate: 6e-05
+  momentum: 0.1
+
+evaluation:
+  interval: 5

@@ -70,8 +70,4 @@ class Unet(nn.Module):
         conv1m_out = self.conv1m(conv2m_out_)
         conv0_out = self.conv0(conv1m_out)
         # conv0_out += 0.3 * mv
-        # if save_path is not None:
-        #     # 将 conv0_out 转换为图像并保存
-        #     conv0_out_img = conv0_out.detach().clamp_(0, 1).cpu()  # 将张量移动到 CPU 上，并剪裁到 0 到 1 的范围内
-        #     save_image(conv0_out_img, save_path)
         return conv0_out

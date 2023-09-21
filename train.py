@@ -140,16 +140,17 @@ def train(args):
             eval_loss = evalutate(net, eval_data, device,batch_size)
             eval_losses_list.append(eval_loss)
             eval_epo.append(epo)
-
+            eval_losses_list = [round(element,3) for element in eval_losses_list]
 
         # save weights
         torch.save(net.state_dict(), weights_path)
         epoch_train_losses /= train_data.__len__()/batch_size  # per epoch loss
         train_losses.append(epoch_train_losses)
-
+        train_losses = [round(element, 3) for element in train_losses]
         # loss fig
         epoches = range(0, epo+1)
 
+        # draw a fig
         plt.figure()
         plt.plot(epoches, train_losses, label='Train loss')
         if (epo+1) % eval_interval == 0 or epo == epoch:

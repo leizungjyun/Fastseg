@@ -147,10 +147,9 @@ def train(args):
         epoch_train_losses /= train_data.__len__()/batch_size  # per epoch loss
         train_losses.append(epoch_train_losses)
         train_losses = [round(element, 3) for element in train_losses]
-        # loss fig
-        epoches = range(0, epo+1)
 
         # draw a fig
+        epoches = range(0, epo+1)
         plt.figure()
         plt.plot(epoches, train_losses, label='Train loss')
         if (epo+1) % eval_interval == 0 or epo == epoch:

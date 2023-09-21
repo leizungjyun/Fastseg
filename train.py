@@ -132,7 +132,6 @@ def train(args):
 
             loss.backward()
             optimizer.step()
-            loss = float(loss)
             epoch_train_losses += loss.item()  # per batch loss
             print('This is batch {i} in epoch {epo}, the loss is {loss}'.format(i=batch_num, epo=epo, loss=loss))
 

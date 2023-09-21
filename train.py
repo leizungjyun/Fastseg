@@ -56,8 +56,10 @@ def evalutate(model, eval_data, device, batch_size):
 
 def train(args):
 
+    # load from config file
     cfg = load_config(args.config)
 
+    # load attribution in config file
     epoch = cfg["training"]["epoch"]
     batch_size = cfg["training"]["batch_size"]
     train_dir = cfg["data"]["train_dir"]

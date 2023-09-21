@@ -4,13 +4,16 @@ from dataset.create_data import MyData
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.parallel
-# import torch.utils.data
-# import torch.utils.data.distributed
-from model.UNet import Unet
+from model.UNet.UNet import Unet
 import matplotlib.pyplot as plt
-from model.ResNetAE_pytorch import ResNetAE
+from model.Resnet.ResNetAE_pytorch import ResNetAE
+from model.transweather.transweather_model import Transweather_base
 import yaml
 import argparse
+from model.loss.perceptual import LossNetwork
+from torchvision.models import vgg16
+import torch.nn.functional as F
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Training Img Restoration")
@@ -75,6 +78,10 @@ def train(args):
     eval_dir = cfg["data"]["eval_dir"]
     height = cfg["data"]["height"]
     width = cfg["data"]["width"]
+    loss_type = cfg["training"]["loss_type"]
+    opt = cfg["optimizer"]["type"]
+    pretrained = cfg["model"]["whether_pretrain"]
+    load_weights_dir = cfg["model"]["load_checkpoint_path"]
 
     for path in [weights_path, save_img_path]:
         if not os.path.exists(path):
@@ -94,7 +101,13 @@ def train(args):
         net = ResNetAE().to(device)
     elif model_type == 'Unet':
         net = Unet().to(device)
+    elif model_type == 'transweather':
+        net = Transweather_base().to(device)
 
+    # load pretrain_weights
+    if pretrained:
+        load_weights_dir = os.path.join(load_weights_dir, f"{model_type}", "mlp.params")
+        net.load_state_dict(torch.load(load_weights_dir), False)
     # whether parallel
     if ngpu > 1:
         net = nn.DataParallel(net)
@@ -104,8 +117,28 @@ def train(args):
     print(f"Number of trainable parameters: {num_params}")
 
     # Define loss function
-    criterion = torch.nn.MSELoss()
-    optimizer = optim.SGD(net.parameters(), lr=float(learning_rate), momentum=momentum)
+    def loss_function(output, val):
+        if loss_type == 'MSE':
+            criterion = F.mse_loss(output, val)
+            return criterion
+        elif loss_type == 'Perceptual':
+            vgg_model = vgg16(pretrained=False).features[:16]
+            vgg_model = vgg_model.to(device)
+            for param in vgg_model.parameters():
+                param.requires_grad = False
+            loss_network = LossNetwork(vgg_model)
+            loss_network.eval()
+            criterion = F.smooth_l1_loss(output, val)
+            criterion2 = loss_network(output, val)
+            criterion =criterion + 0.04*criterion2
+            return criterion
+
+    # choose optimizer
+    if opt == "SGD":
+        optimizer = optim.SGD(net.parameters(), lr=float(learning_rate), momentum=momentum)
+    elif opt == "Adam":
+        optimizer = torch.optim.Adam(net.parameters(), lr=float(learning_rate))
+
     train_losses = []  #
     eval_epo = [] # store the evaluation epoch
     eval_losses_list = []  # initial eval loss to store different eval loss
@@ -133,8 +166,8 @@ def train(args):
 
             optimizer.zero_grad()
             out = net(train_batch)
-            loss = criterion(out, val_batch)
-
+            # loss
+            loss = loss_function(out, val_batch)
             loss.backward()
             optimizer.step()
             epoch_train_losses += loss.item()  # per batch loss
@@ -148,7 +181,10 @@ def train(args):
             eval_losses_list = [round(element,3) for element in eval_losses_list]
 
         # save weights
-        torch.save(net.state_dict(), weights_path)
+        save_weights = os.path.join(weights_path, f"{model_type}" )
+        if not os.path.exists(save_weights):
+            os.makedirs(save_weights)
+        torch.save(net.state_dict(), os.path.join(save_weights, "mlp.params"))
         epoch_train_losses /= train_data.__len__()/batch_size  # per epoch loss
         train_losses.append(epoch_train_losses)
         train_losses = [round(element, 3) for element in train_losses]

@@ -1,11 +1,8 @@
-import cv2
 import torch
 from dataset.create_data import MyData
-from model.UNet import Unet
+from model.UNet.UNet import Unet
 from torchvision.utils import save_image
 import os
-import sys
-import numpy as np
 import torchvision.transforms as transforms
 
 

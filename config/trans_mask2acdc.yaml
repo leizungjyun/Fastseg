@@ -1,4 +1,4 @@
-# uda_config.yaml
+# trans_config.yaml
 
 data:
   train_dir: "/share/home/dq070/hy-tmp/AS_id_all/rain/rain-img/img/train"
@@ -10,24 +10,24 @@ data:
 cuda_visible_devices: "0,1,2,3"
 
 workdir:
-  weights_path: "./checkpoint_HRDA"
-  save_img_path: "./checkpoint_HRDA/imgs"
+  weights_path: "./checkpoint_transweather"
+  save_img_path: "./checkpoint_transweather/imgs"
 
 model:
-  type: "Unet"
+  type: "transweather"
   whether_pretrain: False
-  load_checkpoint_path: "./checkpoint_uda"
-
+  load_checkpoint_path: "./checkpoint_transweather"
 
 training:
   device: "cuda"  # "cuda" if torch.cuda.is_available() else "cpu"
   epoch: 100
   batch_size: 64
-  learning_rate: 6e-05
+  learning_rate: 2e-4
   momentum: 0.1
+  loss_type: "Perceptual"
 
 evaluation:
   interval: 3
 
 optimizer:
-  type: SGD
+  type: Adam

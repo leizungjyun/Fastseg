@@ -21,7 +21,7 @@ class MyData(Dataset):
             for file in files:
                 if file.endswith('.jpg') or file.endswith('.png'):
                     img_paths.append(os.path.join(root,file))
-        return img_paths
+        return sorted(img_paths)
 
     def __getitem__(self, idx,height=224, width=224):
         img_path = self.img_paths[idx]

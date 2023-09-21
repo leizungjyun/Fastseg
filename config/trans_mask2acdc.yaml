@@ -1,8 +1,8 @@
 # trans_config.yaml
 
 data:
-  train_dir: "/share/home/dq070/hy-tmp/AS_id_all/rain/rain-img/img/train"
-  val_dir: "/share/home/dq070/hy-tmp/AS_id_all/rain/imd/img"
+  train_dir: "/share/home/dq070/hy-tmp/AS_id_all/all-condition/all-img/img/train"
+  val_dir: "/share/home/dq070/hy-tmp/AS_id_all/all-condition/imd/img"
   eval_dir: "/share/home/dq070/hy-tmp/AS_id_all/rain/imd/img"
   height: 224
   width: 224

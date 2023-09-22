@@ -10,8 +10,10 @@ data:
 cuda_visible_devices: "0,1,2,3"
 
 workdir:
-  weights_path: "./checkpoint_vss/mlp.params"
-  save_img_path: "./checkpoint_vss/imgs/loss_fig"
+  weights_path: "./checkpoint_vss/"
+  save_img_path: "./checkpoint_vss/imgs/"
+  log_path: "./checkpoint_vss/"
+
 model:
   type: "resnet"
   whether_pretrain: False
@@ -19,14 +21,14 @@ model:
 
 training:
   device: "cuda"  # "cuda" if torch.cuda.is_available() else "cpu"
-  epoch: 100
-  batch_size: 64
-  learning_rate: 6e-05
+  epoch: 50
+  batch_size: 128
+  learning_rate: 2e-4
   momentum: 0.1
-  loss_type: "MSE"
+  loss_type: "Perceptual"
 
 evaluation:
-  interval: 5
+  interval: 3
 
 optimizer:
   type: SGD

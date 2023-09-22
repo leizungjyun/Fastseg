@@ -4,16 +4,16 @@ from model.UNet.UNet import Unet
 from torchvision.utils import save_image
 import os
 import torchvision.transforms as transforms
-
-
+from model.transweather.transweather_model import Transweather_base
+import numpy as np
 def load_weights(UNet):
-    pretrained_weights_path = '/share/home/dq070/Real-Time/Zero_to_One/Unet_pretrain/AR-new/checkpoint_HRDA/mlp.params'
+    pretrained_weights_path = '/share/home/dq070/Real-Time/Zero_to_One/Unet_pretrain/AR-new/checkpoint_transweather/transweather/epoch1_mlp.params'
     pretrained_dict = torch.load(pretrained_weights_path)
     UNet.load_state_dict(pretrained_dict, False)
 
 def denorm(output_img):
-    mean = [0.485, 0.456, 0.406]
-    std = [0.229, 0.224, 0.225]
+    mean = [0.5,0.5,0.5]
+    std = [0.5,0.5,0.5]
     inverse_normalize = transforms.Normalize(
         mean=[-m / s for m, s in zip(mean, std)],
         std=[1 / s for s in std]
@@ -23,19 +23,17 @@ def denorm(output_img):
 
 
 def save_output_img(output_img, output_name):
-    output_img = output_img.detach().clamp_(0, 1).cpu()
-    output_img = output_img * 255
-    # print(output_img.shape)
-    # sys.exit()
-    # print(len(output_img))
-    # sys.exit()
+    output_img = output_img.detach().cpu()
+
     for i in range(output_img.shape[0]):
         output_img_new = output_img[i,...]
-        # output_img_new = denorm(output_img_new)
+        output_img_new = denorm(output_img_new)
+        # output_img = output_img * 255
+        # output_img = np.clip(output_img, 0, 255)
         # output_img_new = np.transpose(output_img_new, (1,2,0))
         # output_img_new = np.array(output_img_new)
         # output_img_new= output_img_new.astype(np.uint8)
-        path = '/share/home/dq070/Real-Time/Zero_to_One/Unet_pretrain/AR-new/visualize/RT01'
+        path = '/share/home/dq070/Real-Time/Zero_to_One/Unet_pretrain/AR-new/checkpoint_vss/visual'
         if not os.path.exists(path):
             os.makedirs(path)
         output_path = os.path.join(path, output_name[i][0])
@@ -47,16 +45,16 @@ def save_output_img(output_img, output_name):
 
 def visualize_output():
     # 输入图像路径
-    input_dir = '/share/home/dq070/hy-tmp/datasets/cityscapes/leftImg8bit/train-all-bright0.5'
+    input_dir = '/share/home/dq070/hy-tmp/datasets/cityscapes/leftImg8bit/val/frankfurt'
     input_img = MyData(input_dir)
     batch_size = 16
     # load pretrained weights and instantiate model
     os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    UNet = Unet().to(device)
+    UNet = Transweather_base().to(device)
     UNet.eval()
     load_weights(UNet)
-    output_batch = torch.zeros(batch_size, 3, 512, 512)
+    output_batch = torch.zeros(batch_size, 3, 224, 224)
     for batch_num in range(0, int(input_img.__len__() / batch_size)):
         output_name = [['0']]*16
         # output_name = np.array(output_name)

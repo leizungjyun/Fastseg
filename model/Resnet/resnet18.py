@@ -1,5 +1,6 @@
 import sys
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -60,10 +61,8 @@ class ResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         out = F.avg_pool2d(out, 4)
-        print(out)
         out = out.view(out.size(0), -1)
-        print(out)
-        sys.exit()
-
+        out = out.detach().cpu()
+        print(np.array(out).shape)
         out = self.fc(out)
         return out

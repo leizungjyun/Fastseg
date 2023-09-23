@@ -10,9 +10,9 @@ data:
 cuda_visible_devices: "0,1,2,3"
 
 workdir:
-  weights_path: "./checkpoint_transweather"
-  save_img_path: "./checkpoint_transweather/imgs"
-  log_path: "./checkpoint_transweather/log"
+  weights_path: "./checkpoint_transweather_debug"
+  save_img_path: "./checkpoint_transweather_debug/imgs"
+  log_path: "./checkpoint_transweather_debug/log"
 
 model:
   type: "transweather"
@@ -22,7 +22,7 @@ model:
 training:
   device: "cuda"  # "cuda" if torch.cuda.is_available() else "cpu"
   epoch: 300
-  batch_size: 128
+  batch_size: 1
   learning_rate: 2e-4
   momentum: 0.1
   loss_type: "Perceptual"

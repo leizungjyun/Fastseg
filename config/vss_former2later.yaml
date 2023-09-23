@@ -1,28 +1,31 @@
 # vss_config.yaml
 
 data:
-  train_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
-  val_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
+#  train_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
+#  val_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
+#  eval_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/val"
+  train_dir: "/share/home/dq070/hy-tmp/datasets/cityscapes/leftImg8bit/train-all-bright0.5"
+  val_dir: "/share/home/dq070/hy-tmp/datasets/cityscapes/leftImg8bit/train-all"
   eval_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/val"
   height: 224
   width: 224
 
-cuda_visible_devices: "0,1,2,3"
+cuda_visible_devices: "1"
 
 workdir:
-  weights_path: "./checkpoint_vss/"
-  save_img_path: "./checkpoint_vss/imgs/"
-  log_path: "./checkpoint_vss/"
+  weights_path: "./checkpoint_vss_debug/"
+  save_img_path: "./checkpoint_vss_debug/imgs/"
+  log_path: "./checkpoint_vss_debug/"
 
 model:
-  type: "resnet"
+  type: "resnet18"
   whether_pretrain: False
   load_checkpoint_path: "./checkpoint_vss"
 
 training:
   device: "cuda"  # "cuda" if torch.cuda.is_available() else "cpu"
-  epoch: 50
-  batch_size: 128
+  epoch: 250
+  batch_size: 2
   learning_rate: 2e-4
   momentum: 0.1
   loss_type: "Perceptual"

@@ -1,3 +1,6 @@
+import sys
+
+import numpy as np
 import torch.nn.functional
 from functools import partial
 from model.transweather.base_networks import *
@@ -786,6 +789,10 @@ class Transweather_base(nn.Module):
         x = self.convproj(x1)
 
         clean = self.active(self.clean(x))
+
+        clean = clean.detach().cpu()
+        # print(np.array(clean).shape)
+        # sys.exit()
 
         return clean
 

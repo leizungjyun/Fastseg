@@ -205,6 +205,7 @@ class ResNetAE(torch.nn.Module):
         return torch.sigmoid(h)
 
     def forward(self, x):
+        print()
         return self.decode(self.encode(x))
 
 

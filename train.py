@@ -228,7 +228,6 @@ def train(args):
         torch.save(net.state_dict(), os.path.join(save_weights, f"epoch{epo+1}_mlp.params"))
         epoch_train_losses /= train_data.__len__()/batch_size  # per epoch loss
         log_file.write(f"This is epoch {epo + 1}, the epoch training loss is {epoch_train_losses}.\n")
-        # log_file.close()
         train_losses.append(epoch_train_losses)
         train_losses = [round(element, 3) for element in train_losses]
 
@@ -244,6 +243,7 @@ def train(args):
         plt.legend()
         save_img = os.path.join(save_img_path, f"loss{model_type}.png")
         plt.savefig(save_img)
+    log_file.close()
 
 if __name__ == '__main__':
     args = parse_args()

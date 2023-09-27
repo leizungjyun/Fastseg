@@ -1,31 +1,31 @@
 # trans_config.yaml
 
 data:
-  train_dir: "/share/home/dq070/hy-tmp/datasets/cityscapes/leftImg8bit/train-all-bright0.5"
-  val_dir: "/share/home/dq070/hy-tmp/datasets/cityscapes/leftImg8bit/train-all"
+  train_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
+  val_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/train"
   eval_dir: "/share/home/dq070/Real-Time/cityscapes/leftImg8bit_sequence/val"
-  height: 224
-  width: 224
+  height: 256
+  width: 256
 
-cuda_visible_devices: "0,1,2,3"
+cuda_visible_devices: "0"
 
 workdir:
-  weights_path: "./checkpoint_transweather_debug"
-  save_img_path: "./checkpoint_transweather_debug/imgs"
-  log_path: "./checkpoint_transweather_debug/log"
+  weights_path: "./work-dir/checkpoint_transweather_debug"
+  save_img_path: "./work-dir/checkpoint_transweather_debug/imgs"
+  log_path: "./work-dir/checkpoint_transweather_debug/log"
 
 model:
-  type: "transweather"
+  type: "transweather_base"
   whether_pretrain: False
-  load_checkpoint_path: "./checkpoint_transweather"
+  load_checkpoint_path: "./work-dir/checkpoint_transweather"
 
 training:
   device: "cuda"  # "cuda" if torch.cuda.is_available() else "cpu"
   epoch: 300
-  batch_size: 1
-  learning_rate: 2e-4
+  batch_size: 128
+  learning_rate: 0.0002
   momentum: 0.1
-  loss_type: "Perceptual"
+  loss_type: "MSE"
 
 evaluation:
   interval: 3

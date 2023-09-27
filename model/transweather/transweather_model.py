@@ -51,7 +51,7 @@ class EncoderTransformer(nn.Module):
         self.patch_block1 = nn.ModuleList([Block(
             dim=embed_dims[1], num_heads=num_heads[0], mlp_ratio=mlp_ratios[0], qkv_bias=qkv_bias, qk_scale=qk_scale,
             drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[cur + i], norm_layer=norm_layer,
-            sr_ratio=sr_ratios[0])
+            sr_ratio=sr_ratios[0]) 
             for i in range(1)])
         self.pnorm1 = norm_layer(embed_dims[1])
         # main  encoder
@@ -790,7 +790,7 @@ class Transweather_base(nn.Module):
 
         clean = self.active(self.clean(x))
 
-        clean = clean.detach().cpu()
+        # clean = clean.detach().cpu()
         # print(np.array(clean).shape)
         # sys.exit()
 
@@ -808,6 +808,87 @@ class Transweather_base(nn.Module):
         torch.cuda.empty_cache()
 
 
+#  ASPP decoder
+class ASPP(nn.Module):
+    def __init__(self, in_channels, out_channels, rates=[6, 12, 18]):
+        super(ASPP, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+        self.conv2 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=rates[0], dilation=rates[0])
+        self.conv3 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=rates[1], dilation=rates[1])
+        self.conv4 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=rates[2], dilation=rates[2])
+        self.conv5 = nn.Conv2d(out_channels * 4, out_channels, kernel_size=1)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x1 = self.conv1(x)
+        x2 = self.conv2(x)
+        x3 = self.conv3(x)
+        x4 = self.conv4(x)
+        out = torch.cat([x1, x2, x3, x4], dim=1)
+        out = self.conv5(out)
+        out = self.relu(out)
+        return out
+
+
+
+class convprojection_aspp(nn.Module):
+    def __init__(self, path=None, **kwargs):
+        super(convprojection,self).__init__()
+
+        self.convd32x = UpsampleConvLayer(512, 512, kernel_size=4, stride=2)
+        self.convd16x = UpsampleConvLayer(512, 320, kernel_size=4, stride=2)
+        self.dense_4 = nn.Sequential(ResidualBlock(320))
+        self.convd8x = UpsampleConvLayer(320, 128, kernel_size=4, stride=2)
+        self.dense_3 = nn.Sequential(ResidualBlock(128))
+        self.convd4x = UpsampleConvLayer(128, 64, kernel_size=4, stride=2)
+        self.dense_2 = nn.Sequential(ResidualBlock(64))
+        self.convd2x = UpsampleConvLayer(64, 16, kernel_size=4, stride=2)
+        self.dense_1 = nn.Sequential( ResidualBlock(16))
+        self.convd1x = UpsampleConvLayer(16, 8, kernel_size=4, stride=2)
+        self.conv_output = ConvLayer(8, 3, kernel_size=3, stride=1, padding=1)
+
+        self.active = nn.Tanh()        
+
+    def forward(self,x1,x2):
+
+        res32x = self.convd32x(x2[0])
+
+        if x1[3].shape[3] != res32x.shape[3] and x1[3].shape[2] != res32x.shape[2]:
+            p2d = (0,-1,0,-1)
+            res32x = F.pad(res32x,p2d,"constant",0)
+            
+        elif x1[3].shape[3] != res32x.shape[3] and x1[3].shape[2] == res32x.shape[2]:
+            p2d = (0,-1,0,0)
+            res32x = F.pad(res32x,p2d,"constant",0)
+        elif x1[3].shape[3] == res32x.shape[3] and x1[3].shape[2] != res32x.shape[2]:
+            p2d = (0,0,0,-1)
+            res32x = F.pad(res32x,p2d,"constant",0)
+
+        res16x = res32x + x1[3]
+        res16x = self.convd16x(res16x) 
+
+        if x1[2].shape[3] != res16x.shape[3] and x1[2].shape[2] != res16x.shape[2]:
+            p2d = (0,-1,0,-1)
+            res16x = F.pad(res16x,p2d,"constant",0)
+        elif x1[2].shape[3] != res16x.shape[3] and x1[2].shape[2] == res16x.shape[2]:
+            p2d = (0,-1,0,0)
+            res16x = F.pad(res16x,p2d,"constant",0)
+        elif x1[2].shape[3] == res16x.shape[3] and x1[2].shape[2] != res16x.shape[2]:
+            p2d = (0,0,0,-1)
+            res16x = F.pad(res16x,p2d,"constant",0)
+
+        res8x = self.dense_4(res16x) + x1[2]
+        res8x = self.convd8x(res8x) 
+        res4x = self.dense_3(res8x) + x1[1]
+        res4x = self.convd4x(res4x)
+        res2x = self.dense_2(res4x) + x1[0]
+        res2x = self.convd2x(res2x)
+        x = res2x
+        x = self.dense_1(x)
+        x = self.convd1x(x)
+
+        return x
+
 ## The following is original network found in paper which solves all-weather removal problems 
 ## using a single model
 
@@ -819,6 +900,8 @@ class Transweather(nn.Module):
         self.Tenc = Tenc()
         
         self.Tdec = Tdec()
+
+        self.aspp = ASPP(in_channels=256, out_channels=256, rates=[6, 12, 18])
         
         self.convtail = convprojection()
 
@@ -835,11 +918,18 @@ class Transweather(nn.Module):
 
         x2 = self.Tdec(x1)
 
+        
+
         x = self.convtail(x1,x2)
 
-        clean = self.active(self.clean(x))
+        # x = x.detach().cpu()
+        # print(np.array(x).shape)
+        # sys.exit()
+        # x = self.aspp(x) 
 
-        return clean
+        x = self.active(self.clean(x))
+
+        return x
 
     def load(self, path):
         """

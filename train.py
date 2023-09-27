@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from model.Resnet.ResNetAE_pytorch import ResNetAE
 from model.Resnet.resnet18 import ResNet, ResBlock
 from model.transweather.transweather_model import Transweather_base
+from model.transweather.transweather_model import Transweather
 import yaml
 import argparse
 from model.loss.perceptual import LossNetwork
@@ -16,7 +17,9 @@ from torchvision.models import vgg16
 import torch.nn.functional as F
 import time
 import datetime
-
+import numpy as np
+import PIL.Image as Image
+import sys
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Training Img Restoration")
@@ -121,13 +124,15 @@ def train(args):
     elif model_type == 'Unet':
         net = Unet().to(device)
     elif model_type == 'transweather':
+        net = Transweather().to(device)
+    elif model_type == 'transweather_base':
         net = Transweather_base().to(device)
     elif model_type == 'resnet18':
         net = ResNet(ResBlock).to(device)
 
     # load pretrain_weights
     if pretrained:
-        load_weights_dir = os.path.join(load_weights_dir, f"{model_type}", "mlp.params")
+        load_weights_dir = os.path.join(load_weights_dir, f"{model_type}", "epoch140_mlp.params")
         net.load_state_dict(torch.load(load_weights_dir), False)
     # whether parallel
     if ngpu > 1:
@@ -165,8 +170,10 @@ def train(args):
     eval_losses_list = []  # initial eval loss to store different eval loss
     # record parameters log
     log_file = open(os.path.join(log_path, f"{model_type}_training_log.txt"), "w")
+    # whether save img
+    save = False
 
-
+    # start training
     for epo in range(0, epoch):
         epoch_start_time = time.time()
         log_file.write(f"Epoch {epo+1} started at {datetime.datetime.now()}.\n")
@@ -197,6 +204,21 @@ def train(args):
 
             optimizer.zero_grad()
             out = net(train_batch)
+            img = out
+            if save:
+                for i in range(0, batch_size):
+                # out = out.detach().cpu().numpy()
+                    img = out.detach().cpu().numpy()
+                    img = img[i, :, :, :]
+                    img = np.transpose(img, (1, 2, 0))
+                    mean = np.array([0.5, 0.5, 0.5])
+                    std = np.array([0.5, 0.5, 0.5])
+                    img = img * std + mean
+                    img = np.clip(img, 0, 1)
+                    img = (img*255).astype('uint8')
+                    img = Image.fromarray(img)
+                    img.save(f'/share/home/dq070/Real-Time/Zero_to_One/Unet_pretrain/AR-new/checkpoint_vss/visual/{batch_num}.png')
+                    print(f"successively save img{i}!")
             # loss
             loss = loss_function(out, val_batch)
             loss.backward()
@@ -210,7 +232,7 @@ def train(args):
             log_file.write(f"This is epoch {epo+1}, the evaluation loss is {eval_loss}.\n")
             eval_losses_list.append(eval_loss)
             eval_epo.append(epo)
-            eval_losses_list = [round(element,3) for element in eval_losses_list]
+            eval_losses_list = [round(element,5) for element in eval_losses_list]
 
         # end time and duration of per epoch
         epoch_end_time = time.time()
@@ -229,7 +251,7 @@ def train(args):
         epoch_train_losses /= train_data.__len__()/batch_size  # per epoch loss
         log_file.write(f"This is epoch {epo + 1}, the epoch training loss is {epoch_train_losses}.\n")
         train_losses.append(epoch_train_losses)
-        train_losses = [round(element, 3) for element in train_losses]
+        train_losses = [round(element, 5) for element in train_losses]
 
         # draw a fig
         epoches = range(0, epo+1)
